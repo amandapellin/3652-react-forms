@@ -1,11 +1,18 @@
 import styled from "styled-components";
 
-const Button = styled.button`
-  background-color: var(--azul-escuro);
+interface ButtonProps {
+  $variante?: "secundario";
+}
+
+const Button = styled.button<ButtonProps>`
+  background-color: ${(props) =>
+    props.$variante === "secundario" ? "var(--branco)" : "var(--azul-escuro)"};
+  color: ${(props) =>
+    props.$variante === "secundario" ? "var(--azul-escuro)" : "var(--branco)"};
+  border: ${(props) =>
+    props.$variante === "secundario" ? "2px solid var(--azul-escuro)" : "none"};
   border-radius: 8px;
   padding: 12px 16px;
-  color: var(--branco);
-  border: none;
   margin-top: 1em;
   font-weight: 700;
   line-height: 19px;

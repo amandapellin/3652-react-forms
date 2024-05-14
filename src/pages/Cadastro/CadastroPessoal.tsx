@@ -1,18 +1,26 @@
 import { Button, Label, Fieldset, Input, Form, Titulo, ErrorMessage } from "../../components";
 import { useForm, Controller } from "react-hook-form";
 import InputMask from "../../components/InputMask";
-import { useEffect } from "react";
-interface FormInputProps{
-  nome: string;
-  email: string;
-  telefone: string;
-  senha: string;
-  senhaVerificada: string;
-}
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const schemaCadastro = z.object({
+  nome: z.string().min(5,{message:"O nome deve conter no mínimo 5 caracteres"}),
+  email: z.string().min(8, {message:"O campo é obrigatório"}).email({message:"Endereço de email inválido"}).transform((val)=> val.toLocaleLowerCase()),
+  telefone: z.string().min(1, {message:"O campo é obrifatório"}).regex(/^\(\d{2,3}\) \d{5}-\d{4}$/, "O telefone inserido está no formato incorreto"),
+  senha: z.string().min(8, {message:"A senha deve ter no mínimo 8 caracteres"}),
+  senhaVerificada: z.string().min(8, {message:"Este campo não pode ser vazio"}),
+}).refine((dados) => dados.senha === dados.senhaVerificada, {
+  message: "As senhas não coincidem",
+  path: ["senhaVerificada"],
+});
+type FormInputProps = z.infer<typeof schemaCadastro>;
+
 const CadastroPessoal = () => {
-  const {register, handleSubmit, formState:{errors, isSubmitSuccessful}, watch, control, reset} = useForm<FormInputProps>(
+  const {register, handleSubmit, formState:{errors}, control} = useForm<FormInputProps>(
     {
       mode:'all',
+      resolver: zodResolver(schemaCadastro),
       defaultValues:{
         nome:'',
         email:'',
@@ -22,31 +30,11 @@ const CadastroPessoal = () => {
       }
     }
   );
-  
-  useEffect(() => {
-    reset();
-  },[reset, isSubmitSuccessful]);
 
   const aoSubmeter = (dados: FormInputProps) => {
     console.log(dados);
   }
-  const senha = watch("senha");
-  
-  const validaSenha = {
-    obrigatorio: (val: string) => !!val || "Por favor, insira a senha novamente",
-    tamanhoMinimo: (val: string) => val.length >= 8 || "A senha deve ter pelo menos 8 caracteres",
-    senhasIguais: (val: string) => val === senha || "As senhas não correspondem"
-  }
-
-  function validarEmail(valor: string){
-    const formatoEmail = /^[^\s@]+@alura\.com\.br$/;
-    if(!formatoEmail.test(valor)){
-      console.error("Endereço de email é invalido para este domínio");
-      return false;
-    }
-    return true;
-  }
-
+ 
   return (
     <>
       <Titulo>Insira alguns dados básicos:</Titulo>
@@ -59,11 +47,7 @@ const CadastroPessoal = () => {
             type="text"
             $error={!!errors.nome}
             aria-describedby="erro-name"
-            {...register("nome", {required: "Campo de nome é obrigatório", 
-            minLength: {
-              value: 5,
-              message: "O nome deve ter no mínimo 5 caracteres"
-            }})}
+            {...register("nome")}
           />
           {errors.nome && <ErrorMessage>{errors.nome.message}</ErrorMessage>}
         </Fieldset>
@@ -74,19 +58,12 @@ const CadastroPessoal = () => {
             placeholder="Insira seu endereço de email"
             type="email"
             $error={!!errors.email}
-            {...register("email",{required: "Campo de email é obrigatório", validate: validarEmail})}
+            {...register("email")}
           />
           {errors.email && <ErrorMessage>{errors.email.message}</ErrorMessage>}
         </Fieldset>
         <Controller 
           control={control} name="telefone" 
-          rules={{
-            pattern: {
-              value: /^\(\d{2,3}\) \d{5}-\d{4}$/,
-              message:"O telefone inserido está no formato incorreto"
-            }, 
-            required: "Campo de telefone é obrigatório"
-          }}
           render={({field}) => (
             <Fieldset>
               <Label>Telefone</Label>
@@ -107,12 +84,7 @@ const CadastroPessoal = () => {
             placeholder="Crie uma senha"
             type="password"
             $error={!!errors.senha}
-            {...register("senha", {required: "O campo de senha é obrigatório", 
-              minLength:{
-                value: 8,
-                message: "A senha deve ter no mínimo 8 caracteres"
-              }
-            })}
+            {...register("senha")}
           />
           {errors.senha && <ErrorMessage>{errors.senha.message}</ErrorMessage>}
         </Fieldset>
@@ -123,9 +95,7 @@ const CadastroPessoal = () => {
             placeholder="Repita a senha anterior"
             type="password"
             $error={!!errors.senhaVerificada}
-            {...register("senhaVerificada", {required: "Repita a senha", 
-            validate: validaSenha
-          })}
+            {...register("senhaVerificada")}
           />
           {errors.senhaVerificada && <ErrorMessage>{errors.senhaVerificada.message}</ErrorMessage>}
         </Fieldset>

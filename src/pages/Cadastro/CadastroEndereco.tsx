@@ -1,5 +1,6 @@
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { Button, ErrorMessage, Fieldset, Form, FormContainer, Input, Label, Titulo,} from "../../components";
+import InputMask from "../../components/InputMask";
 interface FormInputProps{
   cep:string;
   rua:string;
@@ -8,7 +9,7 @@ interface FormInputProps{
   localidade:string;
 }
 const CadastroEndereco = () => {
-  const {register, handleSubmit, setError, setValue, watch, formState:{errors}} = useForm<FormInputProps>({
+  const {register, handleSubmit, setError, setValue, watch, formState:{errors}, control} = useForm<FormInputProps>({
     mode:'all',
     defaultValues:{
       cep:'',
@@ -53,18 +54,28 @@ const CadastroEndereco = () => {
     <>
       <Titulo>Agora, mais alguns dados sobre você:</Titulo>
       <Form onSubmit={handleSubmit(aoSubmeter)}>
-        <Fieldset>
-          <Label htmlFor="campo-cep">CEP</Label>
-          <Input 
-            id="campo-cep" 
-            placeholder="Insira seu CEP" 
-            type="text"
-            {...register("cep", {required:"O campo é obrigatório"})}
-            $error={!!errors.cep}
-            onBlur={() => fetchEndereco(cepDigitado)}
-           />
-           {errors.cep && <ErrorMessage>{errors.cep.message}</ErrorMessage>}
-        </Fieldset>
+        <Controller
+          control={control}
+          name="cep"
+          rules={{
+            required: "O campo de CEP é obrigatório"
+          }}
+          render={({field}) => (
+            <Fieldset>
+              <Label htmlFor="campo-cep">CEP</Label>
+              <InputMask 
+                mask="00000-00"
+                id="campo-cep" 
+                placeholder="Insira seu CEP"
+                type="text" 
+                $error={!!errors.cep}
+                onChange={field.onChange}
+                onBlur={() => fetchEndereco(cepDigitado)}
+              />
+              {errors.cep && <ErrorMessage>{errors.cep.message}</ErrorMessage>}
+            </Fieldset>
+          )}
+        />
         <Fieldset>
           <Label htmlFor="campo-rua">Rua</Label>
           <Input 
